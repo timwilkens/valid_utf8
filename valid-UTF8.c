@@ -10,17 +10,17 @@ int number_of_bytes(char c);
 int
 main (void) {
 
-  char *strings[] = { "\xc3\xb1",         // Valid.
-                      "\xe2\x28\xa1",     // Invalid.
-                      "Hello, World!",    // Valid.
-                      "\xf0\x28\x8c\x28", // Invalid.
-                      "☀ ☃ ☂",            // Valid.
-                      "\xf0\x28\x8c\xbc", // Invalid.
-                      "\xe2\x28\x28",     // Invalid.
-                      "\xc3\x28",         // Invalid.
-                      "",                 // Valid.
-                      "   ",              // Valid.
-                      "\x80",             // Invalid.
+  char *strings[] = { "\xc3\xb1",                  // Valid.
+                      "\xe2\x28\xa1",              // Invalid.
+                      "Hello, World!",             // Valid.
+                      "\xf0\x28\x8c\x28",          // Invalid.
+                      "\xE2\x98\x82\xE2\x98\x83",  // Valid.
+                      "\xf0\x28\x8c\xbc",          // Invalid.
+                      "\xe2\x28\x28",              // Invalid.
+                      "\xc3\x28",                  // Invalid.
+                      "",                          // Valid.
+                      "   ",                       // Valid.
+                      "\x80",                      // Invalid.
                     };
 
   int end = sizeof(strings) / sizeof(strings[0]);
@@ -70,18 +70,18 @@ is_valid_utf8(char *c, int size) {
 bool
 invalid_trailing_byte(char c) {
 // After the leading byte, we have n-1 occurrences of 10xxxxxx bytes
-  return (((c >> 6) & 0x3) != 0x2) ? true : false;
+  return ((c & 0xC0) == 0x80) ? false : true;
 }
 
 int
 number_of_bytes(char c) {
   // High bit set to 0 only on single byte sequences (same as ASCII).
-  if (((c >> 7) & 0x1) == 0) { return 1; }
+  if ((c & 0x80) == 0) { return 1; }
   // All others have the first n bits set to 1 and the next 0.
   // e.g. 2 byte sequences have the first byte start with 110.
-  else if (((c >> 5) & 0x7) == 0x6) { return 2; }
-  else if (((c >> 4) & 0xF) == 0xE) { return 3; }
-  else if (((c >> 3) & 0x1F) == 0x1E) { return 4; }
+  else if ((c & 0xE0) == 0xC0) { return 2; }
+  else if ((c & 0xF0) == 0xE0) { return 3; }
+  else if ((c & 0xF8) == 0xF0) { return 4; }
   // Not a valid UTF-8 sequence.
   else { return 100; }
 }
