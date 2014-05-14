@@ -3,42 +3,47 @@
 #include <stdbool.h>
 #include <string.h>
 
-bool is_valid_utf8(char *c, int size);
-bool invalid_trailing_byte(char c);
-int number_of_bytes(char c);
+static bool is_valid_utf8(const char *c, int size);
+static bool invalid_trailing_byte(const char c);
+static int number_of_bytes(const char c);
+
+struct Tester {
+  const char* string;
+  bool valid;
+};
 
 int
 main (void) {
 
-  char *strings[] = { "\xc3\xb1",                  // Valid.
-                      "\xe2\x28\xa1",              // Invalid.
-                      "Hello, World!",             // Valid.
-                      "\xf0\x28\x8c\x28",          // Invalid.
-                      "\xE2\x98\x82\xE2\x98\x83",  // Valid.
-                      "\xf0\x28\x8c\xbc",          // Invalid.
-                      "\xe2\x28\x28",              // Invalid.
-                      "\xc3\x28",                  // Invalid.
-                      "",                          // Valid.
-                      "   ",                       // Valid.
-                      "\x80",                      // Invalid.
-                    };
+  struct Tester tests[] = { 
+                           {"\xc3\xb1", true},
+                           {"\xe2\x28\xa1", false},
+                           {"Hello, World!", true},
+                           {"\xf0\x28\x8c\x28", false},
+                           {"\xE2\x98\x82\xE2\x98\x83", true},
+                           {"\xf0\x28\x8c\xbc", false},
+                           {"\xe2\x28\x28", false},
+                           {"\xc3\x28" , false},
+                           {"", true},
+                           {"   ", true},
+                           {"\x80", false}
+                         };
 
-  int end = sizeof(strings) / sizeof(strings[0]);
+  int end = sizeof(tests) / sizeof(tests[0]);
   for (int i = 0; i < end; i++) {
 
-    char *string = strings[i];
+    const char *string = tests[i].string;
     int size = strlen(string);
 
-    char *answer = is_valid_utf8(string, size) ? "Valid" : "Invalid";
-    printf("%s\n", string);
-    printf("\t\t%s\n", answer);
+    const char *result = (is_valid_utf8(string, size) == tests[i].valid) ? "Pass" : "Fail";
+    printf("%d: %s\n", i, result);
   }
 
   return 0;
 }
 
-bool
-is_valid_utf8(char *c, int size) {
+static bool
+is_valid_utf8(const char *c, int size) {
 
   for (int i = 0; i < size; i++) {
     switch(number_of_bytes(c[i])) {
@@ -67,14 +72,14 @@ is_valid_utf8(char *c, int size) {
   return true;
 }
 
-bool
-invalid_trailing_byte(char c) {
+static bool
+invalid_trailing_byte(const char c) {
 // After the leading byte, we have n-1 occurrences of 10xxxxxx bytes
   return ((c & 0xC0) == 0x80) ? false : true;
 }
 
-int
-number_of_bytes(char c) {
+static int
+number_of_bytes(const char c) {
   // High bit set to 0 only on single byte sequences (same as ASCII).
   if ((c & 0x80) == 0) { return 1; }
   // All others have the first n bits set to 1 and the next 0.
