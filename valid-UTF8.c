@@ -47,6 +47,8 @@ is_valid_utf8(const char *c, int size) {
 
   for (int i = 0; i < size; i++) {
     switch(number_of_bytes(c[i])) {
+      case 0:
+        return false;
       case 1 :
         break;
       case 2 :
@@ -88,5 +90,5 @@ number_of_bytes(const char c) {
   else if ((c & 0xF0) == 0xE0) { return 3; }
   else if ((c & 0xF8) == 0xF0) { return 4; }
   // Not a valid UTF-8 sequence.
-  else { return 100; }
+  else { return 0; }
 }
